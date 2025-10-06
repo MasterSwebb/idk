@@ -1,191 +1,237 @@
--- Exotic Hub UI
-local CGUI = game:GetService("CoreGui")
+-- Exotic Hub UI v1.0
+-- Completely revamped modern dark neon theme UI
+
+local Players = game:GetService("Players")
 local TS = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
 local RS = game:GetService("RunService")
-local Client = game:GetService("Players").LocalPlayer
+local Client = Players.LocalPlayer
+local CGUI = game:GetService("CoreGui")
 
-local version = "Exotic Hub 1.0"
-local base64encode = (syn and syn.crypt.base64.encode) or crypt.base64encode
+local InterfaceName = "ExoticHubUI"
 
--- Rebrand
-local InterfaceName = "ExoticHub"
-local Interface = game:GetObjects("rbxassetid://14193090516")[1]
-Interface.Name = InterfaceName
-
--- GUI Parent Logic
-if gethui() then 
-    for i, v in ipairs(gethui():GetChildren()) do 
-        if v.Name == InterfaceName then v:Destroy() end
-    end
-    Interface.Parent = gethui()
-elseif syn.protect_gui then
-    for i, v in ipairs(CGUI:GetChildren()) do 
-        if v.Name == InterfaceName then v:Destroy() end
-    end
-    Interface.Parent = CGUI
-    syn.protect_gui(Interface)
-else
-    for i, v in ipairs(CGUI:GetChildren()) do 
-        if v.Name == InterfaceName then v:Destroy() end
-    end
-    Interface.Parent = CGUI
+-- Destroy old GUI if exists
+if gethui() then
+    for _, v in ipairs(gethui():GetChildren()) do if v.Name == InterfaceName then v:Destroy() end end
+elseif CGUI:FindFirstChild(InterfaceName) then
+    CGUI[InterfaceName]:Destroy()
 end
 
-local InterfaceManager = {}
+-- Create main window
+local ExoticHub = Instance.new("ScreenGui")
+ExoticHub.Name = InterfaceName
+ExoticHub.ResetOnSpawn = false
+ExoticHub.Parent = CGUI
 
-function InterfaceManager:Begin(title: string)
-    local OPEN = true
-    local Window = Interface:WaitForChild("Window")
-    local Title = Window:WaitForChild("Container"):WaitForChild("Title")
-    local Templates = Window:WaitForChild("Container"):WaitForChild("Components"):WaitForChild("Templates")
+local Window = Instance.new("Frame")
+Window.Name = "Window"
+Window.Size = UDim2.new(0, 600, 0, 400)
+Window.Position = UDim2.new(0.5, -300, 0.5, -200)
+Window.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+Window.BorderSizePixel = 0
+Window.AnchorPoint = Vector2.new(0.5, 0.5)
+Window.ClipsDescendants = true
+Window.Parent = ExoticHub
+Window.AutoButtonColor = false
 
-    Window.Draggable = true
-    Window.Visible = OPEN
-    Title.Text = title
+-- Rounded corners and shadow
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 15)
+Corner.Parent = Window
 
-    -- Close Button Animations
-    local CloseBtn = Title:WaitForChild("Close")
-    CloseBtn.MouseEnter:Connect(function()
-        TS:Create(CloseBtn, TweenInfo.new(.2), {ImageColor3=Color3.fromRGB(67, 67, 67)}):Play()
-    end)
-    CloseBtn.MouseLeave:Connect(function()
-        TS:Create(CloseBtn, TweenInfo.new(.2), {ImageColor3=Color3.fromRGB(44, 44, 44)}):Play()
-    end)
-    CloseBtn.MouseButton1Click:Connect(function()
-        if gethui() then 
-            for i, v in ipairs(gethui():GetChildren()) do if v.Name == InterfaceName then v:Destroy() end end
-        elseif syn.unprotect_gui then
-            for i, v in ipairs(CGUI:GetChildren()) do syn.unprotect_gui(v); v:Destroy() end
-        else
-            for i, v in ipairs(CGUI:GetChildren()) do if v.Name == InterfaceName then v:Destroy() end end
-        end
-    end)
+local Shadow = Instance.new("UIStroke")
+Shadow.Thickness = 2
+Shadow.Color = Color3.fromRGB(0, 255, 255)
+Shadow.Parent = Window
 
-    local ComponentHandler = {}
-    local Components = {}
+-- Title bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+TitleBar.Parent = Window
 
-    -- Boolean
-    function ComponentHandler:CreateBoolean(options)
-        options = options or {Name=options.Name, Value=options.Value, OnChanged=options.OnChanged}
-        local booleanDebounce = false
-        local booleanComp = Templates:WaitForChild("Boolean"):Clone()
-        booleanComp.Parent = Window:WaitForChild("Container"):WaitForChild("Components")
-        booleanComp.Visible = true
-        booleanComp:WaitForChild("Name").Text = options.Name
+local TitleText = Instance.new("TextLabel")
+TitleText.Text = "Exotic Hub"
+TitleText.Font = Enum.Font.GothamBold
+TitleText.TextSize = 20
+TitleText.TextColor3 = Color3.fromRGB(0, 255, 255)
+TitleText.BackgroundTransparency = 1
+TitleText.Size = UDim2.new(1, -50, 1, 0)
+TitleText.Position = UDim2.new(0, 10, 0, 0)
+TitleText.Parent = TitleBar
 
-        options.update = function()
-            if options.Value then
-                TS:Create(booleanComp.Display, TweenInfo.new(.2), {BackgroundColor3=Color3.fromRGB(60,63,65)}):Play()
-                TS:Create(booleanComp.Display.State, TweenInfo.new(.2, Enum.EasingStyle.Cubic), {BackgroundColor3=Color3.fromRGB(119,126,130), Position=UDim2.new(1,-18,0.5,0)}):Play()
-            else
-                TS:Create(booleanComp.Display, TweenInfo.new(.2), {BackgroundColor3=Color3.fromRGB(25,26,27)}):Play()
-                TS:Create(booleanComp.Display.State, TweenInfo.new(.2, Enum.EasingStyle.Cubic), {BackgroundColor3=Color3.fromRGB(77,81,84), Position=UDim2.new(0,4,0.5,0)}):Play()
-            end
-        end
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 20
+CloseBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseBtn.Position = UDim2.new(1, -35, 0, 0)
+CloseBtn.Parent = TitleBar
+CloseBtn.MouseButton1Click:Connect(function() ExoticHub:Destroy() end)
 
-        booleanComp.Display.OnMouse.MouseButton1Click:Connect(function()
-            if not booleanDebounce then
-                booleanDebounce = true
-                options.Value = not options.Value
-                options.update()
-                pcall(options.OnChanged, options.Value)
-                task.wait(.2)
-                booleanDebounce = false
-            end
-        end)
+-- Sidebar tabs
+local Sidebar = Instance.new("Frame")
+Sidebar.Name = "Sidebar"
+Sidebar.Size = UDim2.new(0, 150, 1, -35)
+Sidebar.Position = UDim2.new(0, 0, 0, 35)
+Sidebar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Sidebar.Parent = Window
 
-        table.insert(Components, options)
-    end
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Padding = UDim.new(0, 10)
+UIListLayout.FillDirection = Enum.FillDirection.Vertical
+UIListLayout.Parent = Sidebar
 
-    -- Button
-    function ComponentHandler:CreateButton(options)
-        options = options or {Name=options.Name, OnClick=options.OnClick}
-        local buttonDebounce = false
-        local buttonComp = Templates:WaitForChild("Button"):Clone()
-        buttonComp.Parent = Window:WaitForChild("Container"):WaitForChild("Components")
-        buttonComp.Visible = true
-        buttonComp.Name.Text = options.Name
+-- Tab sections container
+local Content = Instance.new("Frame")
+Content.Name = "Content"
+Content.Size = UDim2.new(1, -150, 1, -35)
+Content.Position = UDim2.new(0, 150, 0, 35)
+Content.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+Content.Parent = Window
 
-        local function clickEffect(x, y)
-            local frame = Instance.new("Frame", buttonComp)
-            frame.Size = UDim2.new(0,10,0,10)
-            frame.Position = UDim2.new(0,x-buttonComp.AbsolutePosition.X,0.5,0)
-            frame.BackgroundColor3 = Color3.fromRGB(44,44,44)
-            frame.AnchorPoint = Vector2.new(0.5,0.5)
-            frame.ZIndex = 1
-            frame.Visible = true
-            local corner = Instance.new("UICorner", frame)
-            corner.CornerRadius = UDim.new(1,0)
-            TS:Create(frame, TweenInfo.new(1), {Size=UDim2.new(0,100,0,100), BackgroundTransparency=1}):Play()
-            TS:Create(frame, TweenInfo.new(1), {BackgroundTransparency=1}).Completed:Connect(function() frame:Destroy() end)
-        end
+-- Utility function for creating tab buttons
+local function CreateTabButton(name)
+    local btn = Instance.new("TextButton")
+    btn.Text = name
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(0, 255, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    btn.Size = UDim2.new(1, -20, 0, 40)
+    btn.AutoButtonColor = false
+    btn.ClipsDescendants = true
 
-        buttonComp.OnMouse.MouseButton1Down:Connect(function()
-            if not buttonDebounce then
-                buttonDebounce = true
-                pcall(options.OnClick)
-                local mpos = UIS:GetMouseLocation()
-                clickEffect(mpos.X, mpos.Y)
-                task.wait(.1)
-                buttonDebounce = false
-            end
-        end)
-    end
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = btn
 
-    -- Slider
-    function ComponentHandler:CreateSlider(options)
-        options = options or {Name=options.Name, Value=options.Value, Range=options.Range, OnChanged=options.OnChanged}
-        local dragging = false
-        local sliderComp = Templates:WaitForChild("Slider"):Clone()
-        sliderComp.Parent = Window.Container.Components
-        sliderComp.Visible = true
-        sliderComp.Name.Text = options.Name
+    local hover = Instance.new("UIStroke")
+    hover.Color = Color3.fromRGB(0, 255, 255)
+    hover.Thickness = 1
+    hover.Parent = btn
+    hover.Transparency = 1
 
-        local fill = sliderComp.ParentFrame.FillFrame
+    btn.MouseEnter:Connect(function() TS:Create(hover, TweenInfo.new(0.2), {Transparency = 0}):Play() end)
+    btn.MouseLeave:Connect(function() TS:Create(hover, TweenInfo.new(0.2), {Transparency = 1}):Play() end)
 
-        local function updateSlider(val)
-            val = math.clamp(val, options.Range[1], options.Range[2])
-            local perc = (val - options.Range[1])/(options.Range[2]-options.Range[1])
-            TS:Create(fill, TweenInfo.new(.2), {Size=UDim2.new(perc,0,1,0)}):Play()
-            pcall(options.OnChanged, val)
-        end
-
-        sliderComp.ParentFrame.OnMouse.MouseButton1Down:Connect(function() dragging=true end)
-        UIS.InputChanged:Connect(function(input)
-            if dragging and input.UserInputType.Name=="MouseMovement" then
-                local x = math.clamp(input.Position.X, sliderComp.ParentFrame.AbsolutePosition.X, sliderComp.ParentFrame.AbsolutePosition.X+sliderComp.ParentFrame.AbsoluteSize.X)
-                updateSlider((x - sliderComp.ParentFrame.AbsolutePosition.X)/(sliderComp.ParentFrame.AbsoluteSize.X)*(options.Range[2]-options.Range[1])+options.Range[1])
-            end
-        end)
-        UIS.InputEnded:Connect(function(input) if input.UserInputType.Name=="MouseButton1" then dragging=false end end)
-
-        table.insert(Components, options)
-    end
-
-    -- TODO: Add Dropdown, Keybind, TextInput here for Exotic Hub expansion
-
-    task.defer(function()
-        local dragging=false; local startPos; local startInput
-        local function move(input)
-            local delta=input.Position-startInput
-            TS:Create(Window, TweenInfo.new(.1), {Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)}):Play()
-        end
-        Title.InputBegan:Connect(function(input)
-            if input.UserInputType.Name=="MouseButton1" then
-                dragging=true
-                startInput=input.Position
-                startPos=Window.Position
-                input.Changed:Connect(function()
-                    if input.UserInputState.Name=="End" then dragging=false end
-                end)
-            end
-        end)
-        Title.InputChanged:Connect(function(input) if dragging then move(input) end end)
-        UIS.InputBegan:Connect(function(i) if i.KeyCode==Enum.KeyCode.RightShift then OPEN=not OPEN; Window.Visible=OPEN end end)
-    end)
-
-    return ComponentHandler
+    btn.Parent = Sidebar
+    return btn
 end
 
-return InterfaceManager
+-- Example tabs
+local tabs = {"Aimbot", "ESP", "Misc", "Settings"}
+local TabFrames = {}
+
+for i, tabName in ipairs(tabs) do
+    local tabBtn = CreateTabButton(tabName)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundTransparency = 1
+    frame.Visible = (i == 1)
+    frame.Parent = Content
+    TabFrames[tabName] = frame
+
+    tabBtn.MouseButton1Click:Connect(function()
+        for _, f in pairs(TabFrames) do f.Visible = false end
+        frame.Visible = true
+    end)
+end
+
+-- Components utility functions
+local function CreateToggle(parent, name, default, callback)
+    local toggle = Instance.new("Frame")
+    toggle.Size = UDim2.new(1, -20, 0, 40)
+    toggle.Position = UDim2.new(0, 10, 0, #parent:GetChildren()*45)
+    toggle.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    toggle.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = toggle
+
+    local label = Instance.new("TextLabel")
+    label.Text = name
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 16
+    label.TextColor3 = Color3.fromRGB(0, 255, 255)
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Parent = toggle
+
+    local switch = Instance.new("Frame")
+    switch.Size = UDim2.new(0, 30, 0, 15)
+    switch.Position = UDim2.new(1, -40, 0, 12)
+    switch.BackgroundColor3 = default and Color3.fromRGB(0,255,255) or Color3.fromRGB(50,50,50)
+    switch.AnchorPoint = Vector2.new(0,0)
+    switch.Parent = toggle
+
+    local corner2 = Instance.new("UICorner")
+    corner2.CornerRadius = UDim.new(0, 7)
+    corner2.Parent = switch
+
+    local value = default
+    toggle.InputBegan:Connect(function()
+        value = not value
+        switch.BackgroundColor3 = value and Color3.fromRGB(0,255,255) or Color3.fromRGB(50,50,50)
+        if callback then pcall(callback, value) end
+    end)
+end
+
+local function CreateSlider(parent, name, min, max, default, callback)
+    local slider = Instance.new("Frame")
+    slider.Size = UDim2.new(1, -20, 0, 40)
+    slider.Position = UDim2.new(0, 10, 0, #parent:GetChildren()*45)
+    slider.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    slider.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0,10)
+    corner.Parent = slider
+
+    local label = Instance.new("TextLabel")
+    label.Text = name.." : "..default
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 16
+    label.TextColor3 = Color3.fromRGB(0,255,255)
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1,0,0.5,0)
+    label.Parent = slider
+
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(1, -20, 0, 10)
+    bar.Position = UDim2.new(0,10,0,25)
+    bar.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    bar.Parent = slider
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((default-min)/(max-min),0,1,0)
+    fill.BackgroundColor3 = Color3.fromRGB(0,255,255)
+    fill.Parent = bar
+
+    local dragging = false
+    bar.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true end
+    end)
+    bar.InputEnded:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType==Enum.UserInputType.MouseMovement then
+            local x = math.clamp(input.Position.X - bar.AbsolutePosition.X,0,bar.AbsoluteSize.X)
+            local val = min + (x/bar.AbsoluteSize.X)*(max-min)
+            fill.Size = UDim2.new((val-min)/(max-min),0,1,0)
+            label.Text = name.." : "..math.floor(val)
+            if callback then pcall(callback, val) end
+        end
+    end)
+end
+
+-- Example components in first tab
+local TabAimbot = TabFrames["Aimbot"]
+CreateToggle(TabAimbot,"Silent Aim",false,function(v) print("Silent Aim:",v) end)
+CreateSlider(TabAimbot,"FOV",10,360,90,function(v) print("FOV:",v) end)
+
